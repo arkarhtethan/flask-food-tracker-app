@@ -45,7 +45,16 @@ def home():
 
 		db.commit()
 
-	cur = db.execute('SELECT log_table.entry_date,sum(food.protein) as protein,sum(food.carbonhydrates) as carbonhydrates,sum(food.fat) as fat, sum(food.calories) as calories  FROM log_table LEFT JOIN food_date ON food_date.log_date_id = log_table.id LEFT JOIN food ON food.id = food_date.food_id GROUP BY log_table.entry_date order by log_table.entry_date;')
+	cur = db.execute('''
+		
+		SELECT log_table.entry_date,sum(food.protein) as protein,sum(food.carbonhydrates) as carbonhydrates,sum(food.fat) as fat, sum(food.calories) as calories 
+		FROM log_table 
+		LEFT JOIN food_date ON food_date.log_date_id = log_table.id 
+		LEFT JOIN food ON food.id = food_date.food_id 
+		GROUP BY log_table.entry_date 
+		ORDER BY log_table.entry_date;
+
+		''')
 
 	results = cur.fetchall()
 
@@ -101,7 +110,12 @@ def view(date):
 
 	foods = food_cur.fetchall()
 
-	foods_per_day_cur = db.execute('SELECT food.* FROM log_table JOIN food_date ON food_date.log_date_id = log_table.id JOIN food ON food.id = food_date.food_id where log_table.entry_date = ?;',[date])
+	foods_per_day_cur = db.execute('''SELECT food.* 
+		FROM log_table 
+		JOIN food_date ON food_date.log_date_id = log_table.id 
+		JOIN food ON food.id = food_date.food_id 
+		WHERE log_table.entry_date = ?;
+		''',[date])
 
 	foods_per_day_results = foods_per_day_cur.fetchall()
 
@@ -118,7 +132,15 @@ def view(date):
 		totals['fat'] += food['fat']
 		totals['calories'] += food['calories']
 
-	return render_template('day.html', entry_date=date_result['entry_date'],pretty_date=pretty_date, foods=foods, foods_per_day_results=foods_per_day_results, totals=totals)
+	context = {
+		'entry_date':date_result['entry_date'],
+		'pretty_date':pretty_date, 
+		'foods':foods, 
+		'foods_per_day_results':foods_per_day_results, 
+		'totals':totals
+	}
+
+	return render_template('day.html', **context)
 
 @app.route('/food', methods=['GET','POST'])
 def food():
